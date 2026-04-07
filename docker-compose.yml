@@ -1,0 +1,46 @@
+# Demo educativa: backend NestJS (modo desarrollo) + frontend estático
+#
+# Puertos expuestos al host:
+#   backend       → http://localhost:3000   (API REST + Swagger en /api)
+#   frontend-demo → http://localhost:8080
+#
+# Modo desarrollo del backend:
+#   El código fuente se monta como volumen desde el host.
+#   Cualquier cambio en backend/src/ reinicia el servidor automáticamente.
+#   node_modules vive solo dentro del contenedor (volumen anónimo),
+#   así no interfiere con el node_modules del host.
+#
+# Nota sobre la URL del backend en el frontend:
+#   El JS lo ejecuta el browser en el host, por eso usa http://localhost:3000
+#   y NO http://backend:3000 (que sería para llamadas server-side).
+
+version: '3.8'
+
+services:
+
+  # ── BACKEND (desarrollo con hot reload) ──────────────────────
+  backend:
+    build: ./backend
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./backend/.env
+    volumes:
+      - ./backend:/app          # monta el código fuente del host
+      - /app/node_modules       # preserva el node_modules del contenedor
+    networks:
+      - demo-net
+
+  # ── FRONTEND DEMO ─────────────────────────────────────────────
+  frontend-demo:
+    build: ./frontend-demo
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+    networks:
+      - demo-net
+
+networks:
+  demo-net:
+    driver: bridge
